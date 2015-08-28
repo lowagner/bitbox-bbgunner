@@ -5,7 +5,7 @@ have a duel with your friend on the bitbox.
 
 ## TODO
 
-* currently the bitbox lib is not allowing two player input.  so,
-for now you can't duel your friends, sorry.
-
 * player health bar doesn't show when 100% for some reason.
+
+* when "radar" (red line) is nearly horizontal, there are too many computations per line.
+need a better algorithm (write many pixels at once instead of one at a time).
