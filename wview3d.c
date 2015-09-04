@@ -263,44 +263,49 @@ uint16_t *draw_location = draw_buffer;
 // modify the following, and the bitbox doesn't boot the game, try to
 // move your computations around.
 int p = vga_line/240; // player view
+uint8_t pc;
+if (p)
+    pc = 136;
+else
+    pc = 32;
 switch (vga_line%240)
 {
   case 0:
     ise = 0;
     sie = 0;
     free_recent_edges();
-    memset(draw_buffer, 0, SCREEN_W*2);
+    memset(draw_buffer, pc, SCREEN_W*2);
     #ifdef EMULATOR
     if (debug_draw)
         message("\nplayer %d go!\n", p);
     #endif
     return;
   case 1:
-  case 10:
-  case 11:
-  case 16:
-    memset(draw_buffer, 0, SCREEN_W*2);
+  case 8:
+  case 9:
+  case 14:
+  case 15:
+    memset(draw_buffer, pc, SCREEN_W*2);
     // no return/break, continue
   case 2:
   case 3:
   case 4:
-  case 5:
-  case 6:
-  case 9: // skipped here
-  case 12: // skipped here
-  case 15: // purposely skipped
+  case 7:
+  case 10: 
+  case 13: 
+  case 16: 
     get_more_edges(p);
     return;
-  case 7:
-  case 8:
+  case 5:
+  case 6:
     draw_location+=6;
     for (int i=6; i<6 + 631*player[p].health/256; ++i)
     {
         *draw_location = RGB(0xe0,0x10,0); ++draw_location;
     }
     return;
-  case 13:
-  case 14:
+  case 11:
+  case 12:
     if (player[p].health)
     {
         draw_location+=6;
@@ -311,7 +316,6 @@ switch (vga_line%240)
     }
     return;
   case 17:
-    memset(draw_buffer, 0, SCREEN_W*2);
     get_last_edges(p);
     return;
   case 18:
