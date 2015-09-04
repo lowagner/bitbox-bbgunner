@@ -352,12 +352,10 @@ switch (vga_line%240)
                 if (xR >= SCREEN_W)
                     xR = SCREEN_W-1;
 
-                // TODO: do we want to use the fast_fill method of blitter.c ?
                 draw_location = draw_buffer + xL;
-                uint16_t *final_location = draw_location+(xR-xL);
-                for (;draw_location<=final_location;++draw_location)
+                for (;xL<=xR; xL++)
                 {
-                    *draw_location = ei->color;
+                    *draw_location++ = ei->color;
                 }
             }
         } // otherwise (not a horizontal line) 
@@ -426,10 +424,6 @@ switch (vga_line%240)
         ++ise;
     }
  
-    // STARTING ABOUT HERE THERE ARE DIFFICULTIES...
-    // we can do about one iteration of the following loop, and even then
-    // we cannot draw.  EMULATOR works fine, bitbox no.
-
     // draw edges in the list
     uint8_t il_previous = -1; // previous index in the linked list
     uint8_t il = first_active_index; // current index in the linked list
@@ -465,11 +459,6 @@ switch (vga_line%240)
             il = ledger[il].next_active_index;
         }
 
-        // break; // if we break here, the bitbox is fine (IIRC)
-        // but otherwise anything below here will bust stuff!
-
-        if (ei->draw_x >=0 && ei->draw_x < SCREEN_W)
-            draw_buffer[ei->draw_x] = ei->color;
         // proceed with drawing the edge e[ie]:
         if (ei->p2.image[0] == ei->draw_x) // we have achieved the final x coordinate
         {
