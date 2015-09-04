@@ -11,11 +11,6 @@ rare bug on bitbox:  screen will go black for a very specific configuration.
     * too many edges on screen needing special calculations 
      (i.e. too many going from front of view to back of view) -- I think this is it!
     * division by zero somewhere -- unlikely??
-
-ALSO:
-    drawing an edge which is nearly horizontal sometimes blacks out!
-    (perfectly horizontal lines are fine.)
-    need a better drawing algorithm for when lines are nearly horizontal.
 */
 
 edge e[MAX_EDGES]; // array of edges

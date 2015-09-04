@@ -481,16 +481,14 @@ switch (vga_line%240)
         else // x2 > x1 or x1 < x2
         {
             // see code in bitbox/lib/simple.c for draw_line for the algorithm:
-
+           /* 
             while (1) 
             {
                 if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
-                {
                     draw_buffer[ei->draw_x] = ei->color;
-                }
                 if (ei->draw_x*ei->draw_sx >= ei->p2.image[0]*ei->draw_sx) //   x * sx >= ix * sx  -- ok for sx = 1
                     // finished drawing this edge, break // -x >= -ix   (sx=-1) -> x <= ix
-                    break;
+                //    break;
                 int pre_error = ei->draw_error;
                 if (pre_error > -ei->draw_dx) 
                 { 
@@ -503,6 +501,74 @@ switch (vga_line%240)
                     // wait til next line to continue drawing
                     break;
                 }
+            }
+            */
+            // new algorithm does all blitting in one line at one time, to avoid
+            // constantly checking each point.
+            
+            if (ei->draw_error > -ei->draw_dx)
+            {
+                int xleft, xright;
+                int moveover = (ei->draw_error - ei->draw_dy)/ei->draw_dy + 1;
+                ei->draw_error -= ei->draw_dy * moveover;
+                if (ei->draw_sx == 1)
+                {    // moving right
+                    xleft = ei->draw_x;
+                    if (ei->draw_error > -ei->draw_dx) 
+                    {
+                        xright = xleft + moveover;
+                        ei->draw_x = xright + 1;
+                        ei->draw_error -= ei->draw_dy;
+                    }
+                    else
+                    {
+                        xright = xleft + moveover + 1;
+                        ei->draw_x = xright;
+                    }
+                    if (xright > ei->p2.image[0])
+                        xright = ei->p2.image[0];
+                }
+                else // moving left
+                {
+                    xright = ei->draw_x;
+                    if (ei->draw_error > -ei->draw_dx) 
+                    {
+                        xleft = xright - moveover;
+                        ei->draw_x = xleft - 1;
+                        ei->draw_error -= ei->draw_dy;
+                    }
+                    else
+                    {
+                        xleft = xright - moveover - 1;
+                        ei->draw_x = xleft;
+                    }
+                    if (xleft < ei->p2.image[0])
+                        xleft = ei->p2.image[0];
+                }
+                // for going down in y
+                ei->draw_error += ei->draw_dx;
+
+                if (xright < 0 || xleft >= SCREEN_W)
+                {}
+                else
+                {
+                    if (xleft < 0)
+                        xleft = 0;
+                    if (xright >= SCREEN_W)
+                        xright = SCREEN_W-1;
+
+                    for(uint16_t *src = &draw_buffer[xleft]; src<=&draw_buffer[xright]; src++)
+                        *src = ei->color;
+                }
+
+            }
+            else // draw just one point
+            {
+                if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
+                    draw_buffer[ei->draw_x] = ei->color;
+
+                if (ei->draw_error < ei->draw_dy) 
+                    ei->draw_error += ei->draw_dx; 
             }
         }
         // TODO: add colors to edges, and then 

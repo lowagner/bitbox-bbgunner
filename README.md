@@ -6,6 +6,3 @@ have a duel with your friend on the bitbox.
 ## TODO
 
 * player health bar doesn't show when 100% for some reason.
-
-* when "radar" (red line) is nearly horizontal, there are too many computations per line.
-need a better algorithm (write many pixels at once instead of one at a time).
