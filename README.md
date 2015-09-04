@@ -5,4 +5,4 @@ have a duel with your friend on the bitbox.
 
 ## TODO
 
-* player health bar doesn't show when 100% for some reason.
+* back to single player! for some reason player 2 doesn't work.

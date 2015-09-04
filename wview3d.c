@@ -262,7 +262,7 @@ uint16_t *draw_location = draw_buffer;
 // in order to avoid doing too many computations on one line.  if you
 // modify the following, and the bitbox doesn't boot the game, try to
 // move your computations around.
-int p = vga_line/240; // player view
+int p = vga_line/240; // player index
 uint8_t pc;
 if (p)
     pc = 136;
@@ -299,7 +299,8 @@ switch (vga_line%240)
   case 5:
   case 6:
     draw_location+=6;
-    for (int i=6; i<6 + 631*player[p].health/256; ++i)
+    int finali = 6 + 631*player[p].health/256;
+    for (int i=6; i<finali; ++i)
     {
         *draw_location = RGB(0xe0,0x10,0); ++draw_location;
     }
@@ -308,8 +309,9 @@ switch (vga_line%240)
   case 12:
     if (player[p].health)
     {
+        int finali = 6 + 631*player[p].ammo/256;
         draw_location+=6;
-        for (int i=6; i<6 + 631*player[p].ammo/256; ++i)
+        for (int i=6; i<finali; ++i)
         {
             *draw_location = RGB(0x40,0x80,0xff); ++draw_location;
         }
