@@ -334,39 +334,10 @@ switch (vga_line%240)
     while ( ise < nume && (ei=se[p][ise], ei->p1.image[1] <= this_line) )
     {
         // ei is the next edge which should be drawn to screen
-        // check if it is a horizontal line
-        if (ei->p1.image[1] == this_line && ei->p2.image[1] == this_line)
+        if (ei->p2.image[1] >= this_line)
         {
-            // horizontal line, just draw it here    
-            int xL, xR;
-            if (ei->p1.image[0] < ei->p2.image[0]) // x1 < x2
-            {
-                xL = ei->p1.image[0];
-                xR = ei->p2.image[0];
-            }
-            else
-            {
-                xL = ei->p2.image[0];
-                xR = ei->p1.image[0];
-            }
-            if (xR < 0 || xL >= SCREEN_W)
-            {}
-            else
-            {
-                if (xL < 0)
-                    xL = 0;
-                if (xR >= SCREEN_W)
-                    xR = SCREEN_W-1;
+            // it's probably on screen!
 
-                draw_location = draw_buffer + xL;
-                for (;xL<=xR; xL++)
-                {
-                    *draw_location++ = ei->color;
-                }
-            }
-        } // otherwise (not a horizontal line) 
-        else if (ei->p2.image[1] >= this_line)
-        {
             // initialize the drawing pixel:
             if (ei->p1.image[1] == this_line)
             {
@@ -410,12 +381,34 @@ switch (vga_line%240)
             
             if (ok)
             {
-                // insert this edge into the linked list
-                // insert into the first free spot, with everything else after it:
+                // insert this edge into the linked list, 
+                // sorting so that larger p1.iz values are at the front of the list.
+                // but first take the first free index:
                 ledger[first_free_index].active_edge = ei;
-                ledger[first_free_index].next_active_index = first_active_index;
-                // update the first active index:
-                first_active_index = first_free_index;
+                // now sort higher z in front:
+                if (first_active_index == 255 ||  // no active list yet...
+                    ledger[first_active_index].active_edge->p1.iz < ei->p1.iz) // ei is largest
+                {
+                    // put ei at the beginning of the list, everything else follows:
+                    ledger[first_free_index].next_active_index = first_active_index;
+                    // update the first active index:
+                    first_active_index = first_free_index;
+                }
+                else
+                {
+                    uint8_t prev = first_active_index;
+                    uint8_t current = ledger[prev].next_active_index;
+                    while (current < 255)
+                    {
+                        if (ledger[current].active_edge->p1.iz < ei->p1.iz) // ei is larger
+                            break;
+                        prev = current;
+                        current = ledger[prev].next_active_index;
+                    }
+                    // insert ei between prev and current
+                    ledger[prev].next_active_index = first_free_index;
+                    ledger[first_free_index].next_active_index = current;
+                }
                 // move the free index up here:
                 first_free_index = ledger[first_free_index].next_free_index;
                 #ifdef DEBUG
@@ -501,7 +494,45 @@ switch (vga_line%240)
             // new algorithm does all blitting in one line at one time, to avoid
             // constantly checking each point.
             
-            if (ei->draw_error > -ei->draw_dx)
+            if (ei->draw_error <= -ei->draw_dx) // draw just one point
+            {
+                if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
+                    draw_buffer[ei->draw_x] = ei->color;
+
+                if (ei->draw_error < ei->draw_dy) 
+                    ei->draw_error += ei->draw_dx; 
+            }
+            else if (ei->p2.image[1] == this_line)
+            {
+                // horizontal line, just draw it here    
+                int xL, xR;
+                if (ei->draw_sx > 0)
+                {
+                    xL = ei->draw_x;
+                    xR = ei->p2.ix;
+                }
+                else
+                {
+                    xL = ei->p2.ix;
+                    xR = ei->draw_x;
+                }
+                if (xR < 0 || xL >= SCREEN_W)
+                {}
+                else
+                {
+                    if (xL < 0)
+                        xL = 0;
+                    if (xR >= SCREEN_W)
+                        xR = SCREEN_W-1;
+
+                    draw_location = draw_buffer + xL;
+                    for (;xL<=xR; xL++)
+                    {
+                        *draw_location++ = ei->color;
+                    }
+                }
+            } // otherwise (not a horizontal line to end)
+            else //if (ei->draw_error > -ei->draw_dx)
             {
                 int xleft, xright;
                 int moveover = (ei->draw_error - ei->draw_dy)/ei->draw_dy + 1;
@@ -556,14 +587,6 @@ switch (vga_line%240)
                         *src = ei->color;
                 }
 
-            }
-            else // draw just one point
-            {
-                if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
-                    draw_buffer[ei->draw_x] = ei->color;
-
-                if (ei->draw_error < ei->draw_dy) 
-                    ei->draw_error += ei->draw_dx; 
             }
         }
         // TODO: add colors to edges, and then 
