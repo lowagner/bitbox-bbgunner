@@ -209,7 +209,7 @@ void graph_frame()
     message("all edges:\n");
     for (int ill=0; ill<nume; ++ill)
     {
-        edge *ei = se[p][ill];
+        edge *ei = se[0][ill];
         message("  edge p1.(x,y,z) = (%f, %f, %f), .(i, j) = (%d, %d)\n", ei->p1.world[0], ei->p1.world[1],ei->p1.world[2], ei->p1.image[0], ei->p1.image[1]);
         message("       p2.(x,y,z) = (%f, %f, %f), .(i, j) = (%d, %d)\n", ei->p2.world[0], ei->p2.world[1],ei->p2.world[2], ei->p2.image[0], ei->p2.image[1]);
     }
