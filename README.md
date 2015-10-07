@@ -5,4 +5,6 @@ have a duel with your friend on the bitbox.
 
 ## TODO
 
-* back to single player! for some reason player 2 doesn't work.
+* you may need to reset the game a few times until the second player works...
+  for some reason the USB code doesn't always fire up properly.
+* use the ammo bar for something...
