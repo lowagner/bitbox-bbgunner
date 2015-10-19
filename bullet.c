@@ -78,8 +78,8 @@ int update_bullet(int16_t p, uint8_t b)
     int hit_player = check_collision(eb, 1-p);    
     if (hit_player && player[1-p].health)
     {
-        if (player[1-p].health > gun[p].damage)
-            player[1-p].health -= gun[p].damage;
+        if (player[1-p].health > gun[p].damage+1)
+            player[1-p].health -= gun[p].damage+1;
         else
             kill_player(1-p);
     }
@@ -166,9 +166,10 @@ void shoot_bullet(int p)
 {
 if (!gun[p].just_fired)
 {   // you haven't just fired a shot
-    if (gun[p].num_bullets_out < 5)
+    if (gun[p].num_bullets_out < 5 && player[p].ammo >= gun[p].damage/2)
     {
         // you probably can fire!
+        player[p].ammo -= gun[p].damage/2;
         if (gun[p].num_bullets_out != 2)
         {
             switch (gun[p].num_bullets_out)
@@ -197,7 +198,8 @@ if (!gun[p].just_fired)
                 break;
             }
             gun[p].damage = damage_from_range(gun[p].range); 
-            message("range to %d, damage %d\n", (int) gun[p].range, (int) gun[p].damage);
+            player[p].dtdammo = dtdammo_from_range(gun[p].range);
+            message("range to %d, damage %d, dtdammo %d\n", (int) gun[p].range, (int) gun[p].damage, (int) player[p].dtdammo);
         }
 
         ++gun[p].num_bullets_out;
@@ -242,17 +244,32 @@ if (!gun[p].just_fired)
           e[8*p+3+b].color = RGB(0xff,0x99,0);
         
         //message("shooting bullet %d, ", (int) b);
+        gun[p].just_fired = gun[p].range/4 + 2;
     }
     else
     {
-        // all the bullets are out, decrease range and accuracy, also damage.
+        // allow player ammo to respawn
+        if (player[p].ammo < 255)
+        {
+            if (vga_frame % player[p].dtdammo == 0)
+                ++player[p].ammo;
+        }
+        // all the bullets are out or you're out of ammo.
+        // decrease range and accuracy, also damage.
         if (gun[p].range > 16)
         {
             --gun[p].range;
             gun[p].damage = damage_from_range(gun[p].range); 
+            player[p].dtdammo = dtdammo_from_range(gun[p].range);
         }
-        message("range down to %d, damage %d\n", (int) gun[p].range, (int) gun[p].damage);
+        message("range to %d, damage %d, dtdammo %d\n", (int) gun[p].range, (int) gun[p].damage, (int) player[p].dtdammo);
+        gun[p].just_fired = gun[p].range/8 + 1;
     }
-    gun[p].just_fired = gun[p].range/4 + 2;
+}
+else
+if (player[p].ammo < 255)
+{
+    if (vga_frame % player[p].dtdammo == 0)
+        ++player[p].ammo;
 }
 }

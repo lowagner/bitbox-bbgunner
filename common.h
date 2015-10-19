@@ -28,9 +28,9 @@ typedef struct _player {
         };
     };
     uint8_t health;
-    int8_t dhealthdt; // change in health over time
+    int8_t dtdhealth; // change in health over time
     uint8_t ammo;
-    int8_t dammodt;  // change in ammo over time
+    uint8_t dtdammo;  // change in ammo over time
     uint8_t speed; // player speed
     int8_t movement; // forward/backward movement
     int8_t strafe;
@@ -76,13 +76,18 @@ extern int debug_draw;
 inline void kill_player(int p)
 {
     player[p].health = 0;
-    player[p].dhealthdt = -128; // this will roughly correspond with respawn time
+    player[p].dtdhealth = -128; // this will roughly correspond with respawn time
 }
 
 inline uint8_t damage_from_range(uint8_t range)
 {
-    return range/4 + (range*range/512);
+    return range/2 + (range*range/512);
 }
 
+inline uint8_t dtdammo_from_range(uint8_t range)
+{
+    // somewhat log-based
+    return 1+(range/16 + (range*range)/(64*128))/2;
+}
 
 #endif

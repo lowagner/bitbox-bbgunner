@@ -32,6 +32,23 @@ inline void move_player_pieces(int p)
     // use player[0].fx, fy, fz for velocity of edge 2
 }
 
+inline void init_player_attributes(int p)
+{
+    player[p].omega = 0;
+    player[p].speed = 80;
+    player[p].jump_impulse = 10;
+    player[p].movement = 0;
+    player[p].strafe = 0;
+    player[p].ammo = 255;
+    player[p].health = 255;
+    player[p].dtdhealth = 0;
+
+    // reset gun attributes
+    gun[p].range = 255;
+    gun[p].damage = damage_from_range(gun[p].range); 
+    player[p].dtdammo = dtdammo_from_range(gun[p].range); // how much time passes before we add an ammo
+}
+
 inline void respawn_player(int p)
 {
     if (player[1-p].health)
@@ -73,19 +90,8 @@ inline void respawn_player(int p)
             .velocity = {0.0f, 0.0f, 0.0f}
         };
     }
-    player[p].omega = 0;
-    player[p].speed = 80;
-    player[p].jump_impulse = 10;
-    player[p].movement = 0;
-    player[p].strafe = 0;
-    player[p].ammo = 255;
-    player[p].health = 255;
-    player[p].dhealthdt = 0;
-    player[p].dammodt = 0;
 
-    // reset gun attributes
-    gun[p].range = 64;
-    gun[p].damage = damage_from_range(gun[p].range); 
+    init_player_attributes(p);
     
     reset_player_view(p); // reset his/her edges
 }
@@ -102,24 +108,16 @@ void game_init()
 
     // make players stand "back to back":
     player[0] = (Player) { 
-        .health = 255,
-        .ammo = 255,
         .world = {5.0, 0.0, 0.0},
-        .facing = {1.0, 0.0, 0.0},
-        .speed = 80,
-        .movement = 0,
-        .jump_impulse = 10
+        .facing = {1.0, 0.0, 0.0}
     };
+    init_player_attributes(0);
     reset_player_view(0);
     player[1] = (Player) {
-        .health = 255,
-        .ammo = 255,
         .world = {-5.0, 0.0, 0.0},
-        .facing = {-1.0, 0.0, 0.0},
-        .speed = 80,
-        .movement = 0,
-        .jump_impulse = 10
+        .facing = {-1.0, 0.0, 0.0}
     };
+    init_player_attributes(1);
     reset_player_view(1);
 
     message("putting bullets at \"infinity\"\n");
@@ -193,6 +191,11 @@ void game_frame()
             // player can shoot or get hit by bullets on ground or in the air:
             if (GAMEPAD_PRESSED(p, B))
                 shoot_bullet(p);
+            else if (player[p].ammo < 255)
+            {
+                if (vga_frame % player[p].dtdammo == 0)
+                    ++player[p].ammo;
+            }
             
             if (update_player(p)) // check if player dies by poisoning!
             {   
@@ -201,9 +204,9 @@ void game_frame()
         } // end player[p].health != 0
         else // player's health is zero!
         {
-            if (player[p].dhealthdt < 127)
+            if (player[p].dtdhealth < 127)
             {
-                ++player[p].dhealthdt;
+                ++player[p].dtdhealth;
                 // make player asplode
                 move_player_pieces(p);
             }
