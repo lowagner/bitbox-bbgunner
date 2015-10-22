@@ -1,5 +1,6 @@
 #include "bullet.h"
 #include <stdlib.h> // rand
+#include "chiptune.h"
 
 void init_guns()
 {
@@ -175,24 +176,28 @@ if (!gun[p].just_fired)
             switch (gun[p].num_bullets_out)
             {
             case 0:
-                if (gun[p].range < 254)
-                    gun[p].range += 2;
+                if (gun[p].range < 255-5)
+                    gun[p].range += 5;
                 else
                     gun[p].range = 255;
                 break;
             case 1:
-                if (gun[p].range < 255)
-                    ++gun[p].range;
+                if (gun[p].range < 255-2)
+                    gun[p].range += 2;
+                else
+                    gun[p].range = 255;
                 break;
             // two does nothing to the range.  fire a third bullet and it
             // won't affect your range/damage.
             case 3:
-                if (gun[p].range > 16)
-                    --gun[p].range;
+                if (gun[p].range > 15+2)
+                    gun[p].range -= 2;
+                else
+                    gun[p].range = 16;
                 break;
             case 4:
-                if (gun[p].range > 17)
-                    gun[p].range -= 2;
+                if (gun[p].range > 15+6)
+                    gun[p].range -= 6;
                 else
                     gun[p].range = 16;
                 break;
@@ -245,6 +250,10 @@ if (!gun[p].just_fired)
         
         //message("shooting bullet %d, ", (int) b);
         gun[p].just_fired = gun[p].range/4 + 2;
+        // make sound:
+        int pitch = 60 - gun[p].range/16 + (rand()%2);
+        chip_note(4+2*p, pitch, 4);
+        chip_note(4+2*p+1, pitch, 4);
     }
     else
     {
@@ -256,12 +265,14 @@ if (!gun[p].just_fired)
         }
         // all the bullets are out or you're out of ammo.
         // decrease range and accuracy, also damage.
-        if (gun[p].range > 16)
+        if (gun[p].range > 15+2)
         {
-            --gun[p].range;
-            gun[p].damage = damage_from_range(gun[p].range); 
-            player[p].dtdammo = dtdammo_from_range(gun[p].range);
+            gun[p].range -= 2;
         }
+        else
+            gun[p].range = 16;
+        gun[p].damage = damage_from_range(gun[p].range); 
+        player[p].dtdammo = dtdammo_from_range(gun[p].range);
         message("range to %d, damage %d, dtdammo %d\n", (int) gun[p].range, (int) gun[p].damage, (int) player[p].dtdammo);
         gun[p].just_fired = gun[p].range/8 + 1;
     }

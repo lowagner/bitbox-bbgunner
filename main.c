@@ -3,6 +3,8 @@
 #include "wview3d.h"
 #include "player.h"
 #include "bullet.h"
+#include "song.h"
+#include "chiptune.h"
 
 /*
 TODO:  
@@ -44,7 +46,7 @@ inline void init_player_attributes(int p)
     player[p].dtdhealth = 0;
 
     // reset gun attributes
-    gun[p].range = 255;
+    gun[p].range = 64;
     gun[p].damage = damage_from_range(gun[p].range); 
     player[p].dtdammo = dtdammo_from_range(gun[p].range); // how much time passes before we add an ammo
 }
@@ -168,10 +170,14 @@ void game_init()
         message("     .p2.world=(%f, %f, %f), .image=(%d, %d, %f)\n", e[i].p2.world[0], e[i].p2.world[1], e[i].p2.world[2], e[i].p2.image[0], e[i].p2.image[1], e[i].p2.image_z);
     }
     #endif
+    chip_play(&what_chipsong);
 }
 
 void game_frame()
 {
+    if (chip_over())
+        chip_play(&what_chipsong);
+
     kbd_emulate_gamepad();
 
     // move camera to arrow keys (or d-pad):

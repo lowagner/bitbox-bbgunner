@@ -87,7 +87,7 @@ inline uint8_t damage_from_range(uint8_t range)
 inline uint8_t dtdammo_from_range(uint8_t range)
 {
     // somewhat log-based
-    return 1+(range/16 + (range*range)/(64*128))/2;
+    return 1+(range/16 - (range*range)/(64*128))/2;
 }
 
 #endif
