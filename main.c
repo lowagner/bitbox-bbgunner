@@ -175,7 +175,7 @@ void game_init()
 
 void game_frame()
 {
-    if (chip_over())
+    if (chip_song_finished())
         chip_play(&what_chipsong);
 
     kbd_emulate_gamepad();
