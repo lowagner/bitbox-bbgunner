@@ -142,7 +142,7 @@ void game_init()
         .p2 = (vertex) {
             .world = {player[1].x, player[1].y, player[1].z},
         },
-        .color = RGB(0xff,0,0)
+        .color = RGB(0x60,0x00,0xa0)
     };
 
     // get the vertices' screen positions:
