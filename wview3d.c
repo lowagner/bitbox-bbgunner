@@ -466,128 +466,103 @@ switch (vga_line%240)
                 draw_buffer[ei->draw_x] = ei->color;
             } 
         }
-        else // x2 > x1 or x1 < x2
+        else if (ei->p2.image[1] == this_line)
         {
-            // see code in bitbox/lib/simple.c for draw_line for the algorithm:
-           /* 
-            while (1) 
+            // horizontal line, just draw it here    
+            int xL, xR;
+            if (ei->draw_sx > 0)
+            {
+                xL = ei->draw_x;
+                xR = ei->p2.ix;
+            }
+            else
+            {
+                xL = ei->p2.ix;
+                xR = ei->draw_x;
+            }
+            if (xR < 0 || xL >= SCREEN_W)
+            {}
+            else
+            {
+                if (xL < 0)
+                    xL = 0;
+                if (xR >= SCREEN_W)
+                    xR = SCREEN_W-1;
+
+                draw_location = draw_buffer + xL;
+                for (;xL<=xR; xL++)
+                {
+                    *draw_location++ = ei->color;
+                }
+            }
+        } // otherwise (not a horizontal line to end)
+        else // x2 > x1 or x1 < x2
+        // see code in bitbox/lib/simple.c for draw_line for the algorithm.
+        // new algorithm does all blitting in one line at one time, to avoid
+        // constantly checking each point.
+        if (ei->draw_error < ei->draw_dy) // draw just one point
+        {
+            if (ei->draw_error > -ei->draw_dx)  // move x
             {
                 if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
                     draw_buffer[ei->draw_x] = ei->color;
-                if (ei->draw_x*ei->draw_sx >= ei->p2.image[0]*ei->draw_sx) //   x * sx >= ix * sx  -- ok for sx = 1
-                    // finished drawing this edge, break // -x >= -ix   (sx=-1) -> x <= ix
-                //    break;
-                int pre_error = ei->draw_error;
-                if (pre_error > -ei->draw_dx) 
-                { 
-                    ei->draw_error -= ei->draw_dy; 
-                    ei->draw_x += ei->draw_sx; 
-                }
-                if (pre_error < ei->draw_dy) 
-                { 
-                    ei->draw_error += ei->draw_dx; 
-                    // wait til next line to continue drawing
-                    break;
-                }
+                ei->draw_x += ei->draw_sx;
+                ei->draw_error += ei->draw_dx - ei->draw_dy;
             }
-            */
-            // new algorithm does all blitting in one line at one time, to avoid
-            // constantly checking each point.
-            
-            if (ei->draw_error <= -ei->draw_dx) // draw just one point
+            else
             {
                 if (ei->draw_x >= 0 && ei->draw_x < SCREEN_W)
                     draw_buffer[ei->draw_x] = ei->color;
 
-                if (ei->draw_error < ei->draw_dy) 
-                    ei->draw_error += ei->draw_dx; 
+                ei->draw_error += ei->draw_dx; 
             }
-            else if (ei->p2.image[1] == this_line)
-            {
-                // horizontal line, just draw it here    
-                int xL, xR;
-                if (ei->draw_sx > 0)
+
+        }
+        else // ei->draw_error >= ei->draw_dy
+        {
+            int xleft, xright;
+            int moveover = (ei->draw_error)/ei->draw_dy;
+            ei->draw_error -= ei->draw_dy * (moveover+1);
+            if (ei->draw_sx == 1)
+            {    // moving right
+                xleft = ei->draw_x;
+                xright = xleft + moveover;
+                if (xright > ei->p2.ix)
                 {
-                    xL = ei->draw_x;
-                    xR = ei->p2.ix;
+                    xright = ei->p2.ix;
+                    ei->draw_x = xright;
                 }
                 else
-                {
-                    xL = ei->p2.ix;
-                    xR = ei->draw_x;
-                }
-                if (xR < 0 || xL >= SCREEN_W)
-                {}
-                else
-                {
-                    if (xL < 0)
-                        xL = 0;
-                    if (xR >= SCREEN_W)
-                        xR = SCREEN_W-1;
-
-                    draw_location = draw_buffer + xL;
-                    for (;xL<=xR; xL++)
-                    {
-                        *draw_location++ = ei->color;
-                    }
-                }
-            } // otherwise (not a horizontal line to end)
-            else //if (ei->draw_error > -ei->draw_dx)
-            {
-                int xleft, xright;
-                int moveover = (ei->draw_error - ei->draw_dy)/ei->draw_dy + 1;
-                ei->draw_error -= ei->draw_dy * moveover;
-                if (ei->draw_sx == 1)
-                {    // moving right
-                    xleft = ei->draw_x;
-                    if (ei->draw_error > -ei->draw_dx) 
-                    {
-                        xright = xleft + moveover;
-                        ei->draw_x = xright + 1;
-                        ei->draw_error -= ei->draw_dy;
-                    }
-                    else
-                    {
-                        xright = xleft + moveover + 1;
-                        ei->draw_x = xright;
-                    }
-                    if (xright > ei->p2.image[0])
-                        xright = ei->p2.image[0];
-                }
-                else // moving left
-                {
-                    xright = ei->draw_x;
-                    if (ei->draw_error > -ei->draw_dx) 
-                    {
-                        xleft = xright - moveover;
-                        ei->draw_x = xleft - 1;
-                        ei->draw_error -= ei->draw_dy;
-                    }
-                    else
-                    {
-                        xleft = xright - moveover - 1;
-                        ei->draw_x = xleft;
-                    }
-                    if (xleft < ei->p2.image[0])
-                        xleft = ei->p2.image[0];
-                }
-                // for going down in y
-                ei->draw_error += ei->draw_dx;
-
-                if (xright < 0 || xleft >= SCREEN_W)
-                {}
-                else
-                {
-                    if (xleft < 0)
-                        xleft = 0;
-                    if (xright >= SCREEN_W)
-                        xright = SCREEN_W-1;
-
-                    for(uint16_t *src = &draw_buffer[xleft]; src<=&draw_buffer[xright]; src++)
-                        *src = ei->color;
-                }
-
+                    ei->draw_x = xright + 1;
             }
+            else // moving left
+            {
+                xright = ei->draw_x;
+                xleft = xright - moveover;
+                if (xleft < ei->p2.image[0])
+                {
+                    xleft = ei->p2.image[0];
+                    ei->draw_x = xleft;
+                }
+                else
+                    ei->draw_x = xleft-1;
+            }
+            // for going down in y
+            ei->draw_error += ei->draw_dx;
+
+            if (xright < 0 || xleft >= SCREEN_W)
+            {}
+            else
+            {
+                if (xleft < 0)
+                    xleft = 0;
+                if (xright >= SCREEN_W)
+                    xright = SCREEN_W-1;
+
+                for(uint16_t *src = &draw_buffer[xleft]; src<=&draw_buffer[xright]; src++)
+                    *src = ei->color;
+            }
+
         }
         // TODO: add colors to edges, and then 
         // keep a "z" buffer (float z_buffer[SCREEN_W];) which tells you
