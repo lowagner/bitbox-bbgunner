@@ -14,7 +14,6 @@ typedef struct hacky_linked_list {
     uint8_t next_free_index; // index which is the next one free.
 } Ledger;
 
-
 Ledger ledger[MAX_EDGES]; // active (currently being drawn) and free edge list
 uint8_t first_active_index;
 uint8_t first_free_index;
@@ -313,6 +312,8 @@ inline void get_coordinates(int p, int i)
         //effort += 2;
     }
 }
+
+void graph_frame();
 
 
 #endif

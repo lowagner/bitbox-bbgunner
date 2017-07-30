@@ -175,10 +175,12 @@ void game_init()
 
 void game_frame()
 {
+    graph_frame();
+
     if (!chip_song_playing())
         chip_play(&what_chipsong);
 
-    kbd_emulate_gamepad();
+    //kbd_emulate_gamepad();
 
     // move camera to arrow keys (or d-pad):
     for (int p=0; p<2; ++p)

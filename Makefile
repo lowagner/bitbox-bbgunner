@@ -8,9 +8,9 @@ GAME_H_FILES = wview3d.h player.h bullet.h bb3d.h common.h song.h
 
 #ENGINE_FILES += chiptune.c
 
-GAME_C_OPTS += -DVGAMODE_640 #-DDEBUG
+GAME_C_OPTS += -DVGA_MODE=640 #-DDEBUG
 
 
 # see this file for options
-include $(BITBOX)/lib/bitbox.mk
+include $(BITBOX)/kernel/bitbox.mk
 
